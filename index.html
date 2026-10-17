@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Bhasha Doubt Solver</title>
+<style>
+  *{box-sizing:border-box}
+  :root{--bg:#f6f7f9;--panel:#fff;--line:#e6e8ec;--ink:#1b1f24;--muted:#6b7280;--brand:#3b5bdb}
+  html,body{margin:0;height:100%;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+  .app{display:flex;height:100vh}
+  .sidebar{width:290px;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:16px;gap:12px}
+  .brand{display:flex;gap:10px;align-items:center}
+  .logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,#3b5bdb,#7c5cff);color:#fff;display:grid;place-items:center;font-weight:700;font-size:18px}
+  .brand-title{font-weight:700;line-height:1.1}
+  .brand-sub{font-size:12px;color:var(--muted)}
+  .newchat{border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px;cursor:pointer;font-weight:600;font-size:14px}
+  .newchat:hover{background:#f2f3f7}
+  .sid-label{font-size:12px;color:var(--muted);margin-top:4px}
+  .sid{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;font-size:14px}
+  .lm-head{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-top:10px}
+  .lm-list{display:flex;flex-direction:column;gap:8px;overflow:auto;flex:1}
+  .lm-card{border:1px solid var(--line);border-radius:10px;padding:10px;background:#fbfbfd}
+  .lm-misc{font-size:13px;font-weight:600;line-height:1.3}
+  .lm-skill{font-size:12px;color:var(--muted);margin-top:4px}
+  .lm-badge{display:inline-block;font-size:11px;background:#eef1ff;color:#3b5bdb;border-radius:999px;padding:2px 8px;margin-top:6px}
+  .lm-empty{font-size:12.5px;color:var(--muted);line-height:1.5}
+  .sidebar-foot{font-size:11px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px;line-height:1.5}
+  .main{flex:1;display:flex;flex-direction:column;min-width:0}
+  .topbar{padding:12px 22px;border-bottom:1px solid var(--line);background:var(--panel);font-size:12px;color:var(--muted)}
+  .chat{flex:1;overflow:auto;padding:26px 22px;display:flex;flex-direction:column;gap:18px}
+  .msg{display:flex;gap:12px;max-width:800px;width:100%;margin:0 auto}
+  .msg .avatar{width:34px;height:34px;border-radius:9px;flex:0 0 34px;display:grid;place-items:center;font-size:13px;font-weight:700}
+  .msg.user .avatar{background:#e8ecff;color:#3b5bdb}
+  .msg.assistant .avatar{background:linear-gradient(135deg,#3b5bdb,#7c5cff);color:#fff}
+  .bubble{padding:12px 15px;border-radius:13px;line-height:1.6;white-space:pre-wrap;font-size:15px}
+  .msg.assistant .bubble{background:#fff;border:1px solid var(--line)}
+  .msg.user .bubble{background:#3b5bdb;color:#fff}
+  .empty{max-width:800px;margin:auto;text-align:center;color:var(--muted)}
+  .empty h2{color:var(--ink);margin:0 0 8px;font-size:22px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:18px}
+  .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:9px 15px;cursor:pointer;font-size:13px;color:var(--ink)}
+  .chip:hover{background:#f2f3f7}
+  .composer{display:flex;gap:10px;padding:16px 22px 26px;max-width:800px;width:100%;margin:0 auto}
+  .composer textarea{flex:1;resize:none;border:1px solid var(--line);border-radius:13px;padding:13px 15px;font:inherit;font-size:15px;max-height:170px;outline:none}
+  .composer textarea:focus{border-color:#3b5bdb;box-shadow:0 0 0 3px #3b5bdb22}
+  .send{border:0;background:#3b5bdb;color:#fff;border-radius:13px;padding:0 20px;font-weight:600;font-size:15px;cursor:pointer}
+  .send:disabled{opacity:.45;cursor:default}
+  .typing{font-size:13px;color:var(--muted);padding-left:46px}
+  @media(max-width:760px){.sidebar{display:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">&#2349;</div>
+      <div><div class="brand-title">Bhasha</div><div class="brand-sub">Doubt Solver</div></div>
+    </div>
+    <button id="newchat" class="newchat">+ New chat</button>
+    <label class="sid-label" for="sid">Student ID</label>
+    <input id="sid" class="sid" value="you" />
+    <div class="lm-head">Learner model</div>
+    <div id="lm-list" class="lm-list"></div>
+    <div class="sidebar-foot">It never gives the answer. It asks you to think first — and remembers how you think.</div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar" id="status">sarvam-105b</header>
+    <div id="chat" class="chat"></div>
+    <div class="composer">
+      <textarea id="input" rows="1" placeholder="Ask a doubt…  e.g. how do I add 1/2 + 1/3 ?"></textarea>
+      <button id="send" class="send">Send</button>
+    </div>
+  </main>
+</div>
+
+<script>
+  const ELICIT = "Before I help — I won't just give you the answer. Tell me what YOU think the answer is, and how you got there. Even a guess is useful.";
+  const $ = (id) => document.getElementById(id);
+
+  let sid = localStorage.getItem("bds_sid") || "you";
+  let messages = [];
+  let learner = [];
+  let sessionLogged = new Set();
+  let busy = false;
+  $("sid").value = sid;
+
+  function load() {
+    messages = JSON.parse(localStorage.getItem("bds_chat_" + sid) || "[]");
+    learner = JSON.parse(localStorage.getItem("bds_learner_" + sid) || "[]");
+    sessionLogged = new Set();
+  }
+  function save() {
+    localStorage.setItem("bds_chat_" + sid, JSON.stringify(messages));
+    localStorage.setItem("bds_learner_" + sid, JSON.stringify(learner));
+  }
+  function esc(s) { return (s || "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c])); }
+
+  function renderChat() {
+    const c = $("chat");
+    if (!messages.length) {
+      c.innerHTML =
+        '<div class="empty"><h2>Ask me a doubt</h2>' +
+        '<p>I won\'t just give you the answer — I\'ll ask you to explain your thinking first, then guide you.</p>' +
+        '<div class="chips">' +
+        '<button class="chip">how do I add 1/2 + 1/3 ?</button>' +
+        '<button class="chip">why is 0.5 the same as 1/2 ?</button>' +
+        '<button class="chip">why does a negative times a negative give a positive ?</button>' +
+        "</div></div>";
+      c.querySelectorAll(".chip").forEach((b) => {
+        b.onclick = () => { $("input").value = b.textContent.trim(); send(); };
+      });
+      return;
+    }
+    c.innerHTML = messages
+      .map((m) => '<div class="msg ' + m.role + '">' +
+        '<div class="avatar">' + (m.role === "user" ? "You" : "&#2349;") + "</div>" +
+        '<div class="bubble">' + esc(m.content) + "</div></div>")
+      .join("");
+    c.scrollTop = c.scrollHeight;
+  }
+
+  function renderLearner() {
+    const el = $("lm-list");
+    if (!learner.length) {
+      el.innerHTML = '<div class="lm-empty">No misconceptions recorded yet. They appear here as the student reasons, and carry across sessions.</div>';
+      return;
+    }
+    el.innerHTML = learner
+      .map((e) => '<div class="lm-card"><div class="lm-misc">' + esc(e.misconception) + "</div>" +
+        '<div class="lm-skill">skill: ' + esc(e.skill || "—") + "</div>" +
+        '<span class="lm-badge">seen ' + e.count + "&times;" + (e.resolved ? " · resolved" : "") + "</span></div>")
+      .join("");
+  }
+
+  async function send() {
+    if (busy) return;
+    const input = $("input");
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = ""; autoGrow(input);
+    messages.push({ role: "user", content: text });
+    renderChat();
+
+    busy = true; $("send").disabled = true;
+    const chat = $("chat");
+    const t = document.createElement("div");
+    t.className = "typing"; t.textContent = "Bhasha is thinking…";
+    chat.appendChild(t); chat.scrollTop = chat.scrollHeight;
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages, learner, studentId: sid }),
+      });
+      const data = await res.json();
+      messages.push({ role: "assistant", content: data.reply || "[no reply]" });
+
+      if (data.misconception && data.misconception !== "NONE" && !sessionLogged.has(data.misconception)) {
+        sessionLogged.add(data.misconception);
+        const ex = learner.find((e) => e.misconception === data.misconception);
+        if (ex) { ex.count++; ex.resolved = !!data.resolved; }
+        else learner.push({ misconception: data.misconception, skill: data.skill || "", count: 1, resolved: !!data.resolved });
+      }
+      save();
+    } catch (err) {
+      messages.push({ role: "assistant", content: "[Could not reach the server. On Vercel, check that /api/chat deployed and SARVAM_API_KEY is set.]" });
+    } finally {
+      busy = false; $("send").disabled = false;
+      renderChat(); renderLearner();
+    }
+  }
+
+  function autoGrow(el) { el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight, 170) + "px"; }
+
+  $("send").onclick = send;
+  $("input").addEventListener("input", (e) => autoGrow(e.target));
+  $("input").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } });
+  $("newchat").onclick = () => { messages = []; sessionLogged = new Set(); save(); renderChat(); };
+  $("sid").addEventListener("change", (e) => {
+    sid = e.target.value.trim() || "you";
+    localStorage.setItem("bds_sid", sid);
+    load(); renderChat(); renderLearner();
+  });
+
+  load(); renderChat(); renderLearner();
+</script>
+</body>
+</html>
